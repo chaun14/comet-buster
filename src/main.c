@@ -202,7 +202,7 @@ void draw_life_counter(void)
   l_sprite_life_counter = list_new();
   for (i = 0; i < NUMBER_OF_LIFES; i++)
   {
-    sprite = sprite_new(LIFE_COUNTER, "sprites/grayship_16x16.bmp", colorkey, 16, 1, 0, x, 35, 0., 0., 0.);
+    sprite = sprite_new(LIFE_COUNTER, "sprites/heart.bmp", colorkey, 16, 1, 0, x, 35, 0., 0., 0.);
     l_sprite_life_counter = list_add(sprite, l_sprite_life_counter);
     x += 15;
   }
