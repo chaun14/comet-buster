@@ -143,6 +143,7 @@ void game_events(char *key)
  * */
 void draw_explosion(int i, int j)
 {
+  printf("DEBUG: draw_explosion %d %d\n", i, j);
   sprite_t sprite;
   int colorkey = SDL_MapRGB(screen->format, 255, 0, 255);
   sprite = sprite_new(EXPLOSION, "sprites/explosion17.bmp", colorkey, 64, 25, 0, i - 32, j - 32, 0., 0., 0.);
@@ -155,6 +156,7 @@ void draw_explosion(int i, int j)
  * */
 void draw_fire(void)
 {
+  printf("DEBUG: draw_fire\n");
   int colorkey;
   float dir_angle;
   sprite_t sprite;
@@ -177,6 +179,8 @@ void draw_score(TTF_Font *font)
   sprite_t sprite;
 
   sprintf(score_text, "%08d", score);
+  printf("DEBUG: score_text %s\n", score_text);
+
   score_surf = TTF_RenderText_Solid(font, score_text, score_color);
   sprite = sprite_new_text(score_surf, 5, 5);
   if (l_score_el)
@@ -202,6 +206,7 @@ void draw_life_counter(void)
     l_sprite_life_counter = list_add(sprite, l_sprite_life_counter);
     x += 15;
   }
+  printf("DEBUG: draw_life_counter %d\n", list_length(l_sprite_life_counter));
 }
 
 /* Draw the new level ban,
@@ -253,7 +258,7 @@ void draw_sprites(list_ptr *l_sprite)
 
       if (sprite_is_dead(sprite))
       {
-        // printf("DEBUG sprite_is_dead %d\n",sprite->type);
+        printf("DEBUG sprite_is_dead %d\n", sprite->type);
         list_remove(list_el, l_sprite);
         continue;
       }
@@ -293,6 +298,8 @@ void draw_sprites(list_ptr *l_sprite)
  * */
 void split_and_score(list_ptr element, list_ptr *l_sprite_comet, bool update_score)
 {
+  printf("DEBUG: split_and_score\n");
+
   // score + split
   int diff = 0;
   sprite_t data = list_head_sprite(element);
@@ -429,26 +436,35 @@ int main(int argc, char *argv[])
     l_ptr = l_sprite_comet;
     while (!list_is_empty(l_ptr))
     {
+      printf("DEBUG: Getting current sprite  ship <-> comets  %i \n", list_length(l_ptr));
       current_sprite = list_head_sprite(l_ptr);
       list_ptr list_el = l_ptr;
 
       collide = collide_test(sprite_ship, current_sprite, screen->format, &cu, &cv);
       if (collide)
       {
+        printf("DEBUG: ########################### Collide ship <-> comets ###########################\n");
         // draw the explosion
         draw_explosion(cu, cv);
         // no additional score if the ship is destroyed?
         split_and_score(list_el, &l_sprite_comet, false);
+
         list_remove(list_el, &l_sprite_comet);
         sprite_ship->x = sprite_ship->rc_screen_xy.x = 304;
         sprite_ship->y = sprite_ship->rc_screen_xy.y = 224;
         sprite_ship->vx = 0.;
         sprite_ship->vy = 0.;
-        if (!list_is_empty(l_sprite_life_counter))
+
+        // remove a life
+        if (list_length(l_sprite_life_counter) > 1)
         {
+          printf("DEBUG: Removing a life\n");
           sprite_t dead_sprite = list_pop_sprite(&l_sprite_life_counter);
           if (dead_sprite)
+          {
+            printf("DEBUG: Removing a sprite type: %d\n", dead_sprite->type);
             sprite_free(dead_sprite);
+          }
         }
         else
         {
@@ -465,6 +481,7 @@ int main(int argc, char *argv[])
     l_ptr = l_sprite_bullet;
     while (!list_is_empty(l_ptr))
     {
+
       current_sprite = list_head_sprite(l_ptr);
       list_ptr list_el = l_ptr;
       list_ptr l_ptr_c = l_sprite_comet;
