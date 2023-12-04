@@ -2,7 +2,7 @@
 TODO, one day
 =============
 
- - initial comet number: 20 comets is crazy!
+ FAIT - initial comet number: 20 comets is crazy!
  - cleanup: do we respect proper coding style and good practices?
  - clean linked list: which version to chose between a clean functional one ore
    a classical one?
@@ -14,17 +14,18 @@ TODO, one day
  - nyancats should fire (not yet implemented) toward the spaceship
  - L and M comets should be split (PoC done in main.c + q&d sprites ok)
  - TODOs and FIXMEs and DEPRECATEDs
- - score (PoC done in main.c)
- - end of level: how to pass a level? destroy all enemies or only all comets?
+ FAIT - score (PoC done in main.c)
+ FAIT - end of level: how to pass a level? destroy all enemies or only all comets?
    (PoC done in main.c)
- - lives
- - display a screen before the beginning (+help), waiting fo an event
- - display score & lives
+ FAIT - lives
+ - display a screen before the beginning (+help), waiting for an event
+ FAIT - display score & lives
  - display messages? (level X: 3... 2... 1... go! / game over, score = xxx /
    level X passed, score = xxx, etc.)
  - sound?
  - end of game: quit and relaunch or quick relaunch?
  - remove backward movement?
+ - limit spaceship speed
 
  - organization of the whole project -> work packages (modules) (meeting this
    week) + what do we give to students? (at least sprites)

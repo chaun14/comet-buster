@@ -3,6 +3,7 @@
 #include <math.h>
 #include <time.h>
 #include <stdbool.h>
+#include <unistd.h>
 
 #include "sprite.h"
 #include "collider.h"
@@ -41,6 +42,7 @@ void draw_explosion(int i, int j);
 void draw_fire(void);
 void draw_life_counter(void);
 void draw_score(TTF_Font *font);
+void ready_timer(TTF_Font *font);
 void next_level(TTF_Font *font);
 void draw_sprites(list_ptr *l_sprite);
 void split(sprite_t old_comet, list_ptr **l_sprite_comet, enum sprite_type new_type);
@@ -209,6 +211,24 @@ void draw_life_counter(void)
   // printf("DEBUG: draw_life_counter %d\n", list_length(l_sprite_life_counter));
 }
 
+/* Draw the "3, 2, 1, ready ?" message
+ * */
+void ready_timer(TTF_Font *font)
+{
+  SDL_Color text_color = {255, 255, 0, 0}; // R,G,B,A
+  char text[1024];
+  sprite_t sprite_text;
+
+  printf("DEBUG: 3, 2, 1, ready ?\n");
+  fflush(stdout);
+
+  sprintf(text, "3");
+  SDL_Surface *text_surf = TTF_RenderText_Solid(font, text, text_color);
+  sprite_text = sprite_new_text(text_surf, SCREEN_WIDTH / 2 - 10, SCREEN_HEIGHT / 3);
+  sprite_text->lifetime = 150;
+  l_sprite_text = list_add(sprite_text, l_sprite_text);
+}
+
 /* Draw the new level ban,
  *  and level up
  * */
@@ -355,7 +375,7 @@ int main(int argc, char *argv[])
   sprite_t current_sprite;
   int ret;
   TTF_Font *font_score;
-  TTF_Font *font_next_level;
+  TTF_Font *font_messages;
 
   ret = init_sdl();
   if (ret)
@@ -370,7 +390,7 @@ int main(int argc, char *argv[])
 
   // fonts
   font_score = TTF_OpenFont("fonts/LinLibertine_DR.ttf", 24);
-  font_next_level = TTF_OpenFont("fonts/LinLibertine_DR.ttf", 36);
+  font_messages = TTF_OpenFont("fonts/LinLibertine_DR.ttf", 36);
   ;
 
   // create the text sprites list
@@ -403,6 +423,21 @@ int main(int argc, char *argv[])
 
   char key[SDLK_LAST] = {0};
   unsigned int lasttime = 0;
+  
+  // display "3, 2, 1, ready?" message
+  SDL_Color text_color = {255, 255, 0, 0}; // R,G,B,A
+  char text[1024];
+  sprite_t sprite_text;
+
+  printf("DEBUG: 3, 2, 1, ready ?\n");
+  fflush(stdout);
+
+  sprintf(text, "3");
+  SDL_Surface *text_surf = TTF_RenderText_Solid(font_messages, text, text_color);
+  sprite_text = sprite_new_text(text_surf, SCREEN_WIDTH / 2 - 10, SCREEN_HEIGHT / 3);
+  sprite_text->lifetime = 150;
+  l_sprite_text = list_add(sprite_text, l_sprite_text);
+
   /* message pump */
   while (!gameover)
   {
@@ -431,6 +466,114 @@ int main(int argc, char *argv[])
     draw_sprites(&l_sprite_comet);
     // draw bullets
     draw_sprites(&l_sprite_bullet);
+
+    if (timer == 1) {
+      printf("En attente 5\n");
+      sleep(5);
+    } else if (timer == 2) {
+      // display "3, 2, 1, ready?" message
+      SDL_Color text_color = {255, 255, 0, 0}; // R,G,B,A
+      char text[1024];
+      sprite_t sprite_text;
+
+      printf("DEBUG: 2\n");
+      fflush(stdout);
+
+      sprintf(text, "2");
+      SDL_Surface *text_surf_2 = TTF_RenderText_Solid(font_messages, text, text_color);
+      sprite_text = sprite_new_text(text_surf_2, SCREEN_WIDTH / 2 - 10, SCREEN_HEIGHT / 3);
+      sprite_text->lifetime = 150;
+      l_sprite_text = list_add(sprite_text, l_sprite_text);
+
+      sleep(5);
+
+      general_events(key);
+    game_events(key);
+
+    /* draw the background */
+    SDL_BlitSurface(bg, NULL, screen, &rcBg);
+
+    // draw the text sprites
+    draw_sprites(&l_sprite_text);
+
+    // draw the life counter sprites
+    draw_sprites(&l_sprite_life_counter);
+
+    /* play & draw the spaceship sprite */
+    sprite_play_physics(sprite_ship);
+    SDL_BlitSurface(sprite_ship->sprite, &sprite_ship->rc_anim_xy, screen, &sprite_ship->rc_screen_xy);
+
+    // draw comets & nyancats
+    draw_sprites(&l_sprite_comet);
+    // draw bullets
+    draw_sprites(&l_sprite_bullet);
+    } else if (timer == 3) {
+      // display "3, 2, 1, ready?" message
+      printf("DEBUG: 1 ?\n");
+      fflush(stdout);
+
+      sprintf(text, "1");
+      SDL_Surface *text_surf_1 = TTF_RenderText_Solid(font_messages, text, text_color);
+      sprite_text = sprite_new_text(text_surf_1, SCREEN_WIDTH / 2 - 10, SCREEN_HEIGHT / 3);
+      sprite_text->lifetime = 150;
+      l_sprite_text = list_add(sprite_text, l_sprite_text);
+
+      sleep(5);
+
+      general_events(key);
+    game_events(key);
+
+    /* draw the background */
+    SDL_BlitSurface(bg, NULL, screen, &rcBg);
+
+    // draw the text sprites
+    draw_sprites(&l_sprite_text);
+
+    // draw the life counter sprites
+    draw_sprites(&l_sprite_life_counter);
+
+    /* play & draw the spaceship sprite */
+    sprite_play_physics(sprite_ship);
+    SDL_BlitSurface(sprite_ship->sprite, &sprite_ship->rc_anim_xy, screen, &sprite_ship->rc_screen_xy);
+
+    // draw comets & nyancats
+    draw_sprites(&l_sprite_comet);
+    // draw bullets
+    draw_sprites(&l_sprite_bullet);
+    } else if (timer == 4) {
+      // display "3, 2, 1, ready?" message
+      printf("DEBUG: Ready?\n");
+      fflush(stdout);
+
+      sprintf(text, "Ready ?");
+      SDL_Surface *text_surf_ready = TTF_RenderText_Solid(font_messages, text, text_color);
+      sprite_text = sprite_new_text(text_surf_ready, SCREEN_WIDTH / 2 - 50, SCREEN_HEIGHT / 3);
+      sprite_text->lifetime = 150;
+      l_sprite_text = list_add(sprite_text, l_sprite_text);
+
+      sleep(5);
+
+      general_events(key);
+    game_events(key);
+
+    /* draw the background */
+    SDL_BlitSurface(bg, NULL, screen, &rcBg);
+
+    // draw the text sprites
+    draw_sprites(&l_sprite_text);
+
+    // draw the life counter sprites
+    draw_sprites(&l_sprite_life_counter);
+
+    /* play & draw the spaceship sprite */
+    sprite_play_physics(sprite_ship);
+    SDL_BlitSurface(sprite_ship->sprite, &sprite_ship->rc_anim_xy, screen, &sprite_ship->rc_screen_xy);
+
+    // draw comets & nyancats
+    draw_sprites(&l_sprite_comet);
+    // draw bullets
+    draw_sprites(&l_sprite_bullet);
+    }
 
     /* collide tests ship <-> comets */
     l_ptr = l_sprite_comet;
@@ -515,7 +658,7 @@ int main(int argc, char *argv[])
     {
 
       // draw the new level
-      next_level(font_next_level);
+      next_level(font_messages);
       // clean comets & nyancats list from old level
       list_free(l_sprite_comet);
       l_sprite_comet = list_new();
@@ -544,7 +687,7 @@ int main(int argc, char *argv[])
   /* free the background surface */
   SDL_FreeSurface(bg);
   // Shutdown the TTF library
-  TTF_CloseFont(font_next_level);
+  TTF_CloseFont(font_messages);
   TTF_CloseFont(font_score);
   TTF_Quit();
   /* cleanup SDL */
