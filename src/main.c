@@ -1,5 +1,9 @@
 #include <SDL.h>
 #include <SDL_ttf.h>
+#include "SDL_audio.h"
+#include <SDL_mixer.h>
+#include <SDL_keysym.h>
+
 #include <math.h>
 #include <time.h>
 #include <stdbool.h>
@@ -45,6 +49,8 @@ void next_level(TTF_Font *font);
 void draw_sprites(list_ptr *l_sprite);
 void split(sprite_t old_comet, list_ptr **l_sprite_comet, enum sprite_type new_type);
 void split_and_score(list_ptr element, list_ptr *l_sprite_comet, bool update_score);
+void PlaySound(char *file);
+void mixaudio(void *unused, Uint8 *stream, int len);
 
 /* SDL Initialisation. Create windows and so on
  *  return 0 if everything is ok, otherwise 1.
@@ -55,6 +61,9 @@ int init_sdl(void)
   SDL_Init(SDL_INIT_VIDEO);
   /* set the title bar */
   SDL_WM_SetCaption("Comet buster", "w00t!");
+
+  printf("DEBUG: SDL version %d.%d.%d\n", SDL_MAJOR_VERSION, SDL_MINOR_VERSION, SDL_PATCHLEVEL);
+
   /* create window */
   screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT, 32, SDL_SWSURFACE);
   if (!screen)
@@ -65,9 +74,68 @@ int init_sdl(void)
     return 1;
   }
 
+  // start SDL with audio support
+  if (SDL_Init(SDL_INIT_AUDIO) == -1)
+  {
+    printf("SDL_Init: %s\n", SDL_GetError());
+    exit(1);
+  }
+
+  // initialize SDL_mixer
+  if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 1024) == -1)
+  {
+    printf("Mix_OpenAudio: %s\n", Mix_GetError());
+    exit(2);
+  }
+
   /* set keyboard repeat */
   SDL_EnableKeyRepeat(50, 50);
   return 0;
+}
+
+#define NUM_SOUNDS 16
+struct sample
+{
+  Uint8 *data;
+  int dpos;
+  int dlen;
+} sounds[NUM_SOUNDS];
+
+void PlaySound(char *file)
+{
+  // sound stuff
+  int audio_rate, audio_channels,
+      // set this to any of 512,1024,2048,4096
+      // the higher it is, the more FPS shown and CPU needed
+      audio_buffers = 512;
+  Uint16 audio_format;
+  Uint32 t;
+  Mix_Music *music;
+  int bits = 0;
+  int volume = SDL_MIX_MAXVOLUME - 1;
+
+  // print out some info on the audio device and stream
+  Mix_QuerySpec(&audio_rate, &audio_format, &audio_channels);
+  bits = audio_format & 0xFF;
+  // printf("Opened audio at %d Hz %d bit %s, %d bytes audio buffer\n", audio_rate, bits, audio_channels > 1 ? "stereo" : "mono", audio_buffers);
+
+  // load the song
+  if (!(music = Mix_LoadMUS(file)))
+  {
+    printf("Mix_LoadMUS(\"%s\"): %s\n", file, Mix_GetError());
+    // this might be a critical error but honestly the game is still playable even without music...
+  }
+
+  // start playing and displaying the wav
+  // wait for escape key of the quit event to finish
+  t = SDL_GetTicks();
+  if (Mix_PlayMusic(music, 1) == -1)
+  {
+    printf("Mix_PlayMusic: %s\n", Mix_GetError());
+    // well, there's no music, but most games don't break without music...
+  }
+
+  Mix_VolumeMusic(volume);
 }
 
 /* general SDL events hanlder
@@ -164,6 +232,8 @@ void draw_fire(void)
   dir_angle = 2. * PI * sprite_ship->anim_sprite_num / sprite_ship->anim_sprite_num_max;
   sprite = sprite_new(BULLET, "sprites/bullet02.bmp", colorkey, 4, 1, 0, sprite_ship->rc_screen_xy.x + sprite_ship->size / 2 * (1 + cos(dir_angle)), sprite_ship->rc_screen_xy.y + sprite_ship->size / 2 * (1 - sin(dir_angle)), BULLET_SPEED * cos(dir_angle), BULLET_SPEED * (-sin(dir_angle)), 0.);
   sprite->lifetime = BULLET_LIFETIME;
+  PlaySound("audio/laser.wav");
+
   l_sprite_bullet = list_add(sprite, l_sprite_bullet);
 }
 
@@ -217,6 +287,8 @@ void next_level(TTF_Font *font)
   SDL_Color text_color = {255, 255, 0, 0}; // R,G,B,A
   char text[1024];
   sprite_t sprite_text;
+
+  PlaySound("audio/levelUP.wav");
 
   printf("DEBUG: Congratulation! You won the level %d (score=%d)\n", level, score);
   fflush(stdout);
@@ -459,6 +531,8 @@ int main(int argc, char *argv[])
         if (list_length(l_sprite_life_counter) > 1)
         {
           //   printf("DEBUG: Removing a life\n");
+          PlaySound("audio/damage.wav");
+
           sprite_t dead_sprite = list_pop_sprite(&l_sprite_life_counter);
           if (dead_sprite)
           {
@@ -497,6 +571,11 @@ int main(int argc, char *argv[])
         if (collide)
         {
           // draw the explosion
+          if (sprite_comet->type == ET)
+            PlaySound("audio/hit_nyan.wav");
+          else
+            PlaySound("audio/hit.wav");
+
           draw_explosion(cu, cv);
           split_and_score(list_el_c, &l_sprite_comet, true); // addtional points
           list_remove(list_el_c, &l_sprite_comet);
@@ -537,6 +616,12 @@ int main(int argc, char *argv[])
     }
 
   } // loop !gameover
+
+  PlaySound("audio/gameover.wav");
+
+  // TODO: add a "game over" text showing the score
+
+  SDL_Delay(3000);
 
   printf("Bye bye.\n");
   /* free the space_ship sprite */
