@@ -43,7 +43,7 @@ int list_length(list_ptr l)
     // printf("list_length\n");
     int listLengh = 0;
 
-    // go thought the list while there is a cel
+    // go through the list while there is a cel
     while (l)
     {
         listLengh++;

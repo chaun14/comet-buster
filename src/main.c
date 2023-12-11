@@ -7,6 +7,7 @@
 #include <math.h>
 #include <time.h>
 #include <stdbool.h>
+#include <unistd.h>
 
 #include "sprite.h"
 #include "collider.h"
@@ -427,7 +428,7 @@ int main(int argc, char *argv[])
   sprite_t current_sprite;
   int ret;
   TTF_Font *font_score;
-  TTF_Font *font_next_level;
+  TTF_Font *font_messages;
 
   ret = init_sdl();
   if (ret)
@@ -442,7 +443,7 @@ int main(int argc, char *argv[])
 
   // fonts
   font_score = TTF_OpenFont("fonts/LinLibertine_DR.ttf", 24);
-  font_next_level = TTF_OpenFont("fonts/LinLibertine_DR.ttf", 36);
+  font_messages = TTF_OpenFont("fonts/LinLibertine_DR.ttf", 36);
   ;
 
   // create the text sprites list
@@ -475,6 +476,12 @@ int main(int argc, char *argv[])
 
   char key[SDLK_LAST] = {0};
   unsigned int lasttime = 0;
+  
+  // display "3, 2, 1, ready?" message
+  SDL_Color text_color = {255, 255, 0, 0}; // R,G,B,A
+  char text[1024];
+  sprite_t sprite_text;
+
   /* message pump */
   while (!gameover)
   {
@@ -482,6 +489,36 @@ int main(int argc, char *argv[])
     SDL_Event event;
     list_ptr l_ptr;
     int counter;
+
+    // display the '3, 2, 1, go !' timer
+    if (timer >= 1 && timer <= 4) {
+      int lifetime = 2;
+      int offset = 10;
+      fflush(stdout);
+      switch(timer) {
+        case 1:
+          sprintf(text, "3");
+          break;
+        case 2:
+          sprintf(text, "2");
+          break;
+        case 3:
+          sprintf(text, "1");
+          break;
+        case 4:
+          sprintf(text, "Go !");
+          lifetime = 50;
+          offset = 30;
+          break;
+        default:
+        break;
+      }
+      SDL_Surface *text_surf = TTF_RenderText_Solid(font_messages, text, text_color);
+      sprite_text = sprite_new_text(text_surf, SCREEN_WIDTH / 2 - offset, SCREEN_HEIGHT / 3);
+      sprite_text->lifetime = lifetime;
+      l_sprite_text = list_add(sprite_text, l_sprite_text);
+      SDL_Delay(1000);
+    }
 
     general_events(key);
     game_events(key);
@@ -594,7 +631,7 @@ int main(int argc, char *argv[])
     {
 
       // draw the new level
-      next_level(font_next_level);
+      next_level(font_messages);
       // clean comets & nyancats list from old level
       list_free(l_sprite_comet);
       l_sprite_comet = list_new();
@@ -629,7 +666,7 @@ int main(int argc, char *argv[])
   /* free the background surface */
   SDL_FreeSurface(bg);
   // Shutdown the TTF library
-  TTF_CloseFont(font_next_level);
+  TTF_CloseFont(font_messages);
   TTF_CloseFont(font_score);
   TTF_Quit();
   /* cleanup SDL */
