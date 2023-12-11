@@ -419,7 +419,7 @@ int main(int argc, char *argv[])
     int counter;
 
     // display the '3, 2, 1, go !' timer
-    if (timer == 1 || timer == 2 || timer == 3 || timer == 4) {
+    if (timer >= 1 && timer <= 4) {
       int lifetime = 2;
       int offset = 10;
       fflush(stdout);
