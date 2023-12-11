@@ -42,7 +42,6 @@ void draw_explosion(int i, int j);
 void draw_fire(void);
 void draw_life_counter(void);
 void draw_score(TTF_Font *font);
-void ready_timer(TTF_Font *font);
 void next_level(TTF_Font *font);
 void draw_sprites(list_ptr *l_sprite);
 void split(sprite_t old_comet, list_ptr **l_sprite_comet, enum sprite_type new_type);
@@ -209,24 +208,6 @@ void draw_life_counter(void)
     x += 15;
   }
   // printf("DEBUG: draw_life_counter %d\n", list_length(l_sprite_life_counter));
-}
-
-/* Draw the "3, 2, 1, ready ?" message
- * */
-void ready_timer(TTF_Font *font)
-{
-  SDL_Color text_color = {255, 255, 0, 0}; // R,G,B,A
-  char text[1024];
-  sprite_t sprite_text;
-
-  printf("DEBUG: 3, 2, 1, ready ?\n");
-  fflush(stdout);
-
-  sprintf(text, "3");
-  SDL_Surface *text_surf = TTF_RenderText_Solid(font, text, text_color);
-  sprite_text = sprite_new_text(text_surf, SCREEN_WIDTH / 2 - 10, SCREEN_HEIGHT / 3);
-  sprite_text->lifetime = 150;
-  l_sprite_text = list_add(sprite_text, l_sprite_text);
 }
 
 /* Draw the new level ban,
@@ -429,15 +410,6 @@ int main(int argc, char *argv[])
   char text[1024];
   sprite_t sprite_text;
 
-  printf("DEBUG: 3, 2, 1, ready ?\n");
-  fflush(stdout);
-
-  sprintf(text, "3");
-  SDL_Surface *text_surf = TTF_RenderText_Solid(font_messages, text, text_color);
-  sprite_text = sprite_new_text(text_surf, SCREEN_WIDTH / 2 - 10, SCREEN_HEIGHT / 3);
-  sprite_text->lifetime = 150;
-  l_sprite_text = list_add(sprite_text, l_sprite_text);
-
   /* message pump */
   while (!gameover)
   {
@@ -445,6 +417,36 @@ int main(int argc, char *argv[])
     SDL_Event event;
     list_ptr l_ptr;
     int counter;
+
+    // display the '3, 2, 1, go !' timer
+    if (timer == 1 || timer == 2 || timer == 3 || timer == 4) {
+      int lifetime = 2;
+      int offset = 10;
+      fflush(stdout);
+      switch(timer) {
+        case 1:
+          sprintf(text, "3");
+          break;
+        case 2:
+          sprintf(text, "2");
+          break;
+        case 3:
+          sprintf(text, "1");
+          break;
+        case 4:
+          sprintf(text, "Go !");
+          lifetime = 50;
+          offset = 30;
+          break;
+        default:
+        break;
+      }
+      SDL_Surface *text_surf = TTF_RenderText_Solid(font_messages, text, text_color);
+      sprite_text = sprite_new_text(text_surf, SCREEN_WIDTH / 2 - offset, SCREEN_HEIGHT / 3);
+      sprite_text->lifetime = lifetime;
+      l_sprite_text = list_add(sprite_text, l_sprite_text);
+      SDL_Delay(1000);
+    }
 
     general_events(key);
     game_events(key);
@@ -466,114 +468,6 @@ int main(int argc, char *argv[])
     draw_sprites(&l_sprite_comet);
     // draw bullets
     draw_sprites(&l_sprite_bullet);
-
-    if (timer == 1) {
-      printf("En attente 5\n");
-      sleep(5);
-    } else if (timer == 2) {
-      // display "3, 2, 1, ready?" message
-      SDL_Color text_color = {255, 255, 0, 0}; // R,G,B,A
-      char text[1024];
-      sprite_t sprite_text;
-
-      printf("DEBUG: 2\n");
-      fflush(stdout);
-
-      sprintf(text, "2");
-      SDL_Surface *text_surf_2 = TTF_RenderText_Solid(font_messages, text, text_color);
-      sprite_text = sprite_new_text(text_surf_2, SCREEN_WIDTH / 2 - 10, SCREEN_HEIGHT / 3);
-      sprite_text->lifetime = 150;
-      l_sprite_text = list_add(sprite_text, l_sprite_text);
-
-      sleep(5);
-
-      general_events(key);
-    game_events(key);
-
-    /* draw the background */
-    SDL_BlitSurface(bg, NULL, screen, &rcBg);
-
-    // draw the text sprites
-    draw_sprites(&l_sprite_text);
-
-    // draw the life counter sprites
-    draw_sprites(&l_sprite_life_counter);
-
-    /* play & draw the spaceship sprite */
-    sprite_play_physics(sprite_ship);
-    SDL_BlitSurface(sprite_ship->sprite, &sprite_ship->rc_anim_xy, screen, &sprite_ship->rc_screen_xy);
-
-    // draw comets & nyancats
-    draw_sprites(&l_sprite_comet);
-    // draw bullets
-    draw_sprites(&l_sprite_bullet);
-    } else if (timer == 3) {
-      // display "3, 2, 1, ready?" message
-      printf("DEBUG: 1 ?\n");
-      fflush(stdout);
-
-      sprintf(text, "1");
-      SDL_Surface *text_surf_1 = TTF_RenderText_Solid(font_messages, text, text_color);
-      sprite_text = sprite_new_text(text_surf_1, SCREEN_WIDTH / 2 - 10, SCREEN_HEIGHT / 3);
-      sprite_text->lifetime = 150;
-      l_sprite_text = list_add(sprite_text, l_sprite_text);
-
-      sleep(5);
-
-      general_events(key);
-    game_events(key);
-
-    /* draw the background */
-    SDL_BlitSurface(bg, NULL, screen, &rcBg);
-
-    // draw the text sprites
-    draw_sprites(&l_sprite_text);
-
-    // draw the life counter sprites
-    draw_sprites(&l_sprite_life_counter);
-
-    /* play & draw the spaceship sprite */
-    sprite_play_physics(sprite_ship);
-    SDL_BlitSurface(sprite_ship->sprite, &sprite_ship->rc_anim_xy, screen, &sprite_ship->rc_screen_xy);
-
-    // draw comets & nyancats
-    draw_sprites(&l_sprite_comet);
-    // draw bullets
-    draw_sprites(&l_sprite_bullet);
-    } else if (timer == 4) {
-      // display "3, 2, 1, ready?" message
-      printf("DEBUG: Ready?\n");
-      fflush(stdout);
-
-      sprintf(text, "Ready ?");
-      SDL_Surface *text_surf_ready = TTF_RenderText_Solid(font_messages, text, text_color);
-      sprite_text = sprite_new_text(text_surf_ready, SCREEN_WIDTH / 2 - 50, SCREEN_HEIGHT / 3);
-      sprite_text->lifetime = 150;
-      l_sprite_text = list_add(sprite_text, l_sprite_text);
-
-      sleep(5);
-
-      general_events(key);
-    game_events(key);
-
-    /* draw the background */
-    SDL_BlitSurface(bg, NULL, screen, &rcBg);
-
-    // draw the text sprites
-    draw_sprites(&l_sprite_text);
-
-    // draw the life counter sprites
-    draw_sprites(&l_sprite_life_counter);
-
-    /* play & draw the spaceship sprite */
-    sprite_play_physics(sprite_ship);
-    SDL_BlitSurface(sprite_ship->sprite, &sprite_ship->rc_anim_xy, screen, &sprite_ship->rc_screen_xy);
-
-    // draw comets & nyancats
-    draw_sprites(&l_sprite_comet);
-    // draw bullets
-    draw_sprites(&l_sprite_bullet);
-    }
 
     /* collide tests ship <-> comets */
     l_ptr = l_sprite_comet;
