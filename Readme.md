@@ -6,22 +6,20 @@ And based on many teacher's work throught the (long) time.
 ## Features:
 
 - Working game base without too much segfaults
-- Sounds
+- Sounds (Can only play one sound at a time which is kinda sad)
 - Startup / Gameover title messages
-- High Score save
+- High Score save (add to leaderboard if name doesn't exitst, otherwise update only if new score is higher than previous high score)
 - Nice health hearts
 
 ## Installation
 
 - Please use a real os such as linux to avoid problems :/
-- Make sure you have all required depedencies such as `make gcc libsdl1.2-dev libsdl-mixer1.2-dev libsdl-ttf2.0-dev` ¯\\_(ツ)\_/¯
+- Make sure you have all required depedencies such as `make gcc libsdl1.2-dev libsdl-mixer1.2-dev libsdl-ttf2.0-dev` ¯\\\_(ツ)\_/¯
 - Run `sh start.sh` ʘ_ʘ
 - Enjoy :)
 
 ## Screenshot
 
 ![](https://github.com/chaun14/comet-buster/blob/master/images/image.png?raw=true)
-
-
 
 BTW if you're using this repo to avoid working on the project that's not a clever idea, always do by yourself otherwise you won't understand ;)

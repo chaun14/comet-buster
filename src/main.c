@@ -25,6 +25,7 @@
 // #define GDB() __builtin_trap();
 
 bool gameover;
+bool ended = false;
 SDL_Surface *screen;
 sprite_t sprite_ship;
 list_ptr l_sprite_bullet;
@@ -150,7 +151,7 @@ void general_events(char *keys)
     switch (event.type)
     {
     case SDL_QUIT:
-      gameover = true;
+      ended = true;
       break;
     case SDL_KEYUP:
       keys[event.key.keysym.sym] = 0;
@@ -160,7 +161,7 @@ void general_events(char *keys)
       {
       case SDLK_ESCAPE:
       case SDLK_q:
-        gameover = true;
+        ended = true;
         break;
       case SDLK_d:
         GDB();
@@ -614,7 +615,6 @@ int main(int argc, char *argv[])
   rcBg.x = 0;
   rcBg.y = 0;
 
-  bool ended = false;
   bool gameover = false;
   shoot_again = true;
 
@@ -646,6 +646,7 @@ int main(int argc, char *argv[])
         sprintf(text, "3");
         break;
       case 2:
+        PlaySound("audio/countdown.wav");
         sprintf(text, "2");
         break;
       case 3:
@@ -863,10 +864,14 @@ int main(int argc, char *argv[])
 
   // TODO: add a "game over" text showing the score
 
-  SDL_Delay(3000);
+  // if ending the game because of gamover, otherwise if close just close
+  if (gameover)
+  {
+    SDL_Delay(3000);
 
-  // save the score
-  gameoverScore(score);
+    // save the score
+    gameoverScore(score);
+  }
 
   printf("Bye bye.\n");
   /* free the space_ship sprite */
