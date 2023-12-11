@@ -145,7 +145,7 @@ void PlaySound(char *file)
 void general_events(char *keys)
 {
   SDL_Event event;
-  while (SDL_PollEvent(&event))
+  while (SDL_PollEvent(&event) && !gameover)
   {
     switch (event.type)
     {
@@ -499,7 +499,7 @@ void gameoverScore(int score)
       }
       else
       {
-        printf("Sorry, you have to beat your previous high score of %i to dave !\n", current->score);
+        printf("Sorry, you have to beat your previous high score of %i to save !\n", current->score);
       }
       found = 1;
       break;
@@ -593,6 +593,7 @@ int main(int argc, char *argv[])
 
   // initialize score and score sprite
   score = 0;
+  int gamoverTimer = 0;
   draw_score(font_score);
   draw_life_counter();
 
@@ -674,7 +675,8 @@ int main(int argc, char *argv[])
     // draw the text sprites
     draw_sprites(&l_sprite_text);
 
-    if (!gameover) {
+    if (!gameover)
+    {
       // draw the life counter sprites
       draw_sprites(&l_sprite_life_counter);
 
@@ -688,7 +690,17 @@ int main(int argc, char *argv[])
       draw_sprites(&l_sprite_bullet);
     }
 
-    while (gameover) {
+    while (gameover)
+    {
+      //  printf("DEBUG: Gameover loop\n");
+
+      // if it's the first time we enter the gameover loop, play the gameover sound
+      if (gamoverTimer == 0)
+      {
+        PlaySound("audio/gameover.wav");
+      }
+      gamoverTimer++;
+
       SDL_Color text_color_white = {255, 255, 255, 0}; // R,G,B,A
 
       fflush(stdout);
@@ -697,20 +709,26 @@ int main(int argc, char *argv[])
       sprite_text = sprite_new_text(text_surf, SCREEN_WIDTH / 2 - 90, SCREEN_HEIGHT / 3);
       l_sprite_text = list_add(sprite_text, l_sprite_text);
 
-      sprintf(text, "Enter your name in console to save your score");
+      sprintf(text, "Press SPACE to save your score with your name in console");
       text_surf = TTF_RenderText_Solid(font_score, text, text_color_white);
-      sprite_text = sprite_new_text(text_surf, SCREEN_WIDTH / 2 - 220, SCREEN_HEIGHT / 2);
+      sprite_text = sprite_new_text(text_surf, SCREEN_WIDTH / 2 - 280, SCREEN_HEIGHT / 2);
       l_sprite_text = list_add(sprite_text, l_sprite_text);
 
-      sprintf(text, "Press Espace to close");
+      sprintf(text, "Press ESC to close without saving");
       text_surf = TTF_RenderText_Solid(font_score, text, text_color_white);
-      sprite_text = sprite_new_text(text_surf, SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2 + 50);
+      sprite_text = sprite_new_text(text_surf, SCREEN_WIDTH / 2 - 150, SCREEN_HEIGHT / 2 + 50);
       l_sprite_text = list_add(sprite_text, l_sprite_text);
 
       if (key[SDLK_ESCAPE])
       { // Escape
-        printf("DEBUG: Closing game");
-        return 0;
+        // printf("DEBUG: Closing game");
+        printf("Bye bye.\n");
+        exit(0);
+      }
+      if (key[SDLK_SPACE])
+      {
+        ended = true;
+        break;
       }
 
       /* update the screen */
@@ -842,8 +860,6 @@ int main(int argc, char *argv[])
     }
 
   } // loop !ended
-
-  PlaySound("audio/gameover.wav");
 
   // TODO: add a "game over" text showing the score
 
