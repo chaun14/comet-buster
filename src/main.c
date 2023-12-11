@@ -52,6 +52,7 @@ void split(sprite_t old_comet, list_ptr **l_sprite_comet, enum sprite_type new_t
 void split_and_score(list_ptr element, list_ptr *l_sprite_comet, bool update_score);
 void PlaySound(char *file);
 void mixaudio(void *unused, Uint8 *stream, int len);
+void gameoverScore(int score);
 
 /* SDL Initialisation. Create windows and so on
  *  return 0 if everything is ok, otherwise 1.
@@ -416,6 +417,148 @@ void split(sprite_t old_comet, list_ptr **l_sprite_comet, enum sprite_type new_t
   **l_sprite_comet = list_add(second, **l_sprite_comet);
 }
 
+void gameoverScore(int score)
+{
+  // printf("DEBUG Loading gameoverscore with score %i\n", score);
+  struct score
+  {
+    char name[20];
+    int score;
+    struct score *next;
+  } scoreTab;
+
+  // load the score file
+  FILE *scoreFile = fopen("scores.txt", "r");
+  // content inside should be stored in a name:score format
+
+  if (scoreFile == NULL)
+  {
+    printf("Cannot open score file for reading\n");
+    exit(-1);
+  }
+
+  char *line = NULL;
+  size_t len = 0;
+  size_t read;
+
+  struct score *scoreList = NULL;
+
+  // read the file line by line
+  while (getline(&line, &len, scoreFile) != -1)
+  {
+    //  printf("Retrieved line of length %zu:\n", read);
+    //  printf("%s", line);
+
+    char *name = strtok(line, ":");
+    char *score = strtok(NULL, ":");
+
+    struct score *newScore = malloc(sizeof(struct score));
+    strcpy(newScore->name, name);
+    newScore->score = atoi(score);
+
+    // add the new score to the list
+    newScore->next = scoreList;
+
+    //  printf("Loaded name: %s, score: %d\n", newScore->name, newScore->score);
+
+    scoreList = newScore;
+  }
+
+  // prepare the new score by asking the user for his name
+  struct score *newScore = malloc(sizeof(struct score));
+  printf("Enter your name: ");
+  scanf("%19[^\n]", newScore->name);
+  // printf("DEBUG: Loading gameoverscore with name %s\n", newScore->name);
+
+  // if the user did not enter a name, set it to anonymous
+  if (strlen(newScore->name) == 0 || newScore->name == "\0")
+  {
+    printf("Your name is too short, it will be set to 'Anonymous'\n");
+    strcpy(newScore->name, "Anonymous");
+  }
+  else if (strlen(newScore->name) > 20)
+  {
+    printf("Your name is too long, it will be truncated to 20 characters\n");
+    newScore->name[20] = '\0';
+  }
+
+  newScore->score = score;
+
+  // check if the username already exists
+  struct score *current = scoreList;
+  int found = 0;
+  while (current != NULL)
+  {
+    if (strcmp(current->name, newScore->name) == 0)
+    {
+      // update the score only if it is higher
+      if (newScore->score > current->score)
+      {
+        printf("New high score registered for %s, congratulations!\n", newScore->name);
+        current->score = score;
+      }
+      else
+      {
+        printf("Sorry, you have to beat your previous high score of %i to dave !\n", current->score);
+      }
+      found = 1;
+      break;
+    }
+
+    current = current->next;
+  }
+
+  // if the username does not exist, add it to the list
+  if (found == 0)
+  {
+    // add the new score to the list
+    newScore->next = scoreList;
+    scoreList = newScore;
+  }
+
+  // sort the list by score in descending order thanks to github copilot
+  struct score *current1 = scoreList;
+  while (current1 != NULL)
+  {
+    struct score *current2 = current1->next;
+    while (current2 != NULL)
+    {
+      if (current1->score < current2->score)
+      {
+        // swap the scores
+        int tempScore = current1->score;
+        current1->score = current2->score;
+        current2->score = tempScore;
+
+        // swap the names
+        char tempName[20];
+        strcpy(tempName, current1->name);
+        strcpy(current1->name, current2->name);
+        strcpy(current2->name, tempName);
+      }
+
+      current2 = current2->next;
+    }
+
+    current1 = current1->next;
+  }
+
+  // save the score file
+  FILE *scoreFileWrite = fopen("scores.txt", "w");
+  current = scoreList;
+  while (current != NULL)
+  {
+    // printf("Saving name: %s, score: %d\n", current->name, current->score);
+    fprintf(scoreFileWrite, "%s:%d\n", current->name, current->score);
+    current = current->next;
+  }
+
+  if (found == 0)
+  {
+    printf("Your score of %i has been saved successfully, good luck to beat it next time :)\n", score);
+  }
+}
+
 int main(int argc, char *argv[])
 {
   SDL_Surface *temp, *bg;
@@ -444,7 +587,6 @@ int main(int argc, char *argv[])
   // fonts
   font_score = TTF_OpenFont("fonts/LinLibertine_DR.ttf", 24);
   font_messages = TTF_OpenFont("fonts/LinLibertine_DR.ttf", 36);
-  ;
 
   // create the text sprites list
   l_sprite_text = list_new();
@@ -476,7 +618,7 @@ int main(int argc, char *argv[])
 
   char key[SDLK_LAST] = {0};
   unsigned int lasttime = 0;
-  
+
   // display "3, 2, 1, ready?" message
   SDL_Color text_color = {255, 255, 0, 0}; // R,G,B,A
   char text[1024];
@@ -491,26 +633,28 @@ int main(int argc, char *argv[])
     int counter;
 
     // display the '3, 2, 1, go !' timer
-    if (timer >= 1 && timer <= 4) {
+    if (timer >= 1 && timer <= 4)
+    {
       int lifetime = 2;
       int offset = 10;
       fflush(stdout);
-      switch(timer) {
-        case 1:
-          sprintf(text, "3");
-          break;
-        case 2:
-          sprintf(text, "2");
-          break;
-        case 3:
-          sprintf(text, "1");
-          break;
-        case 4:
-          sprintf(text, "Go !");
-          lifetime = 50;
-          offset = 30;
-          break;
-        default:
+      switch (timer)
+      {
+      case 1:
+        sprintf(text, "3");
+        break;
+      case 2:
+        sprintf(text, "2");
+        break;
+      case 3:
+        sprintf(text, "1");
+        break;
+      case 4:
+        sprintf(text, "Go !");
+        lifetime = 50;
+        offset = 30;
+        break;
+      default:
         break;
       }
       SDL_Surface *text_surf = TTF_RenderText_Solid(font_messages, text, text_color);
@@ -659,6 +803,9 @@ int main(int argc, char *argv[])
   // TODO: add a "game over" text showing the score
 
   SDL_Delay(3000);
+
+  // save the score
+  gameoverScore(score);
 
   printf("Bye bye.\n");
   /* free the space_ship sprite */
