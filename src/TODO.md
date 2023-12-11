@@ -20,9 +20,9 @@ TODO, one day
  FAIT - lives
  - display a screen before the beginning (+help), waiting for an event
  FAIT - display score & lives
- - display messages? (level X: 3... 2... 1... go! / game over, score = xxx /
+ FAIT (3,2,1,go) - display messages? (level X: 3... 2... 1... go! / game over, score = xxx /
    level X passed, score = xxx, etc.)
- - sound?
+ FAIT - sound?
  - end of game: quit and relaunch or quick relaunch?
  - remove backward movement?
  - limit spaceship speed
