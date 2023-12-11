@@ -1,3 +1,4 @@
 toto42:1000
+roman:650
 schtroumpf:470
 paupaul:20
