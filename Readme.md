@@ -19,4 +19,4 @@ Small C projet [Roman G](https://github.com/chaun14) and [Jordan B](https://gith
 
 ## Screenshot
 
-[[/image.png|Screenshot]]
+![](https://github.com/chaun14/comet-buster/images/image.png)
