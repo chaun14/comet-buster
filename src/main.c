@@ -613,7 +613,8 @@ int main(int argc, char *argv[])
   rcBg.x = 0;
   rcBg.y = 0;
 
-  gameover = false;
+  bool ended = false;
+  bool gameover = false;
   shoot_again = true;
 
   char key[SDLK_LAST] = {0};
@@ -625,7 +626,7 @@ int main(int argc, char *argv[])
   sprite_t sprite_text;
 
   /* message pump */
-  while (!gameover)
+  while (!ended)
   {
     lasttime = SDL_GetTicks();
     SDL_Event event;
@@ -673,17 +674,60 @@ int main(int argc, char *argv[])
     // draw the text sprites
     draw_sprites(&l_sprite_text);
 
-    // draw the life counter sprites
-    draw_sprites(&l_sprite_life_counter);
+    if (!gameover) {
+      // draw the life counter sprites
+      draw_sprites(&l_sprite_life_counter);
 
-    /* play & draw the spaceship sprite */
-    sprite_play_physics(sprite_ship);
-    SDL_BlitSurface(sprite_ship->sprite, &sprite_ship->rc_anim_xy, screen, &sprite_ship->rc_screen_xy);
+      /* play & draw the spaceship sprite */
+      sprite_play_physics(sprite_ship);
+      SDL_BlitSurface(sprite_ship->sprite, &sprite_ship->rc_anim_xy, screen, &sprite_ship->rc_screen_xy);
 
-    // draw comets & nyancats
-    draw_sprites(&l_sprite_comet);
-    // draw bullets
-    draw_sprites(&l_sprite_bullet);
+      // draw comets & nyancats
+      draw_sprites(&l_sprite_comet);
+      // draw bullets
+      draw_sprites(&l_sprite_bullet);
+    }
+
+    while (gameover) {
+      SDL_Color text_color_white = {255, 255, 255, 0}; // R,G,B,A
+
+      fflush(stdout);
+      sprintf(text, "Game Over !");
+      SDL_Surface *text_surf = TTF_RenderText_Solid(font_messages, text, text_color);
+      sprite_text = sprite_new_text(text_surf, SCREEN_WIDTH / 2 - 90, SCREEN_HEIGHT / 3);
+      l_sprite_text = list_add(sprite_text, l_sprite_text);
+
+      sprintf(text, "Enter your name in console to save your score");
+      text_surf = TTF_RenderText_Solid(font_score, text, text_color_white);
+      sprite_text = sprite_new_text(text_surf, SCREEN_WIDTH / 2 - 220, SCREEN_HEIGHT / 2);
+      l_sprite_text = list_add(sprite_text, l_sprite_text);
+
+      sprintf(text, "Press Espace to close");
+      text_surf = TTF_RenderText_Solid(font_score, text, text_color_white);
+      sprite_text = sprite_new_text(text_surf, SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2 + 50);
+      l_sprite_text = list_add(sprite_text, l_sprite_text);
+
+      if (key[SDLK_ESCAPE])
+      { // Escape
+        printf("DEBUG: Closing game");
+        return 0;
+      }
+
+      /* update the screen */
+      SDL_UpdateRect(screen, 0, 0, 0, 0);
+
+      timer++;
+      while (SDL_Flip(screen) != 0)
+      {               /* if GC not ready to blit */
+        SDL_Delay(1); /* wait and keep vertical sync*/
+      }
+      while (SDL_GetTicks() - lasttime < 20)
+      { /* minimal frame time: 20ms */
+        SDL_Delay(1);
+      }
+
+      break;
+    }
 
     /* collide tests ship <-> comets */
     l_ptr = l_sprite_comet;
@@ -723,10 +767,11 @@ int main(int argc, char *argv[])
         }
         else
         {
+          gameover = true;
+
           printf(" ============ Game Over ============= \n");
           printf("Score: you reached level %d with %d points\n", level, score);
           fflush(stdout);
-          gameover = true;
         }
       }
       l_ptr = list_next(l_ptr);
@@ -796,7 +841,7 @@ int main(int argc, char *argv[])
       SDL_Delay(1);
     }
 
-  } // loop !gameover
+  } // loop !ended
 
   PlaySound("audio/gameover.wav");
 
