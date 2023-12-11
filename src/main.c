@@ -52,6 +52,7 @@ void split(sprite_t old_comet, list_ptr **l_sprite_comet, enum sprite_type new_t
 void split_and_score(list_ptr element, list_ptr *l_sprite_comet, bool update_score);
 void PlaySound(char *file);
 void mixaudio(void *unused, Uint8 *stream, int len);
+int gameoverScore(int score);
 
 /* SDL Initialisation. Create windows and so on
  *  return 0 if everything is ok, otherwise 1.
@@ -416,6 +417,86 @@ void split(sprite_t old_comet, list_ptr **l_sprite_comet, enum sprite_type new_t
   **l_sprite_comet = list_add(second, **l_sprite_comet);
 }
 
+int gameoverScore(int score)
+{
+
+  struct score
+  {
+    char name[20];
+    int score;
+    struct score *next;
+  } scoreTab;
+
+  // load the score file
+  FILE *scoreFile = fopen("scores.txt", "r");
+  // content inside should be stored in a name:score format
+
+  if (scoreFile == NULL)
+  {
+    printf("Cannot open  score file for reading\n");
+    exit(-1);
+  }
+
+  char *line = NULL;
+  size_t len = 0;
+  ssize_t read;
+
+  struct score *scoreList = NULL;
+
+  while ((read = getline(&line, &len, scoreFile)) != -1)
+  {
+    //  printf("Retrieved line of length %zu:\n", read);
+    //  printf("%s", line);
+
+    char *name = strtok(line, ":");
+    char *score = strtok(NULL, ":");
+
+    struct score *newScore = malloc(sizeof(struct score));
+    strcpy(newScore->name, name);
+    newScore->score = atoi(score);
+
+    // add the new score to the list
+    newScore->next = scoreList;
+  }
+
+  struct score *newScore = malloc(sizeof(struct score));
+
+  printf("Enter your name: ");
+  scanf("%s", newScore->name);
+  newScore->score = score;
+
+  // add the new score to the list
+  newScore->next = scoreList;
+
+  // close the file
+  fclose(scoreFile);
+
+  // save the new score list to the file
+  scoreFile = fopen("scores.txt", "w");
+
+  if (scoreFile == NULL)
+  {
+    printf("Cannot open  score file for writing\n");
+    exit(-1);
+  }
+
+  while (scoreList != NULL && scoreList->next != NULL)
+  {
+    printf("%s", scoreList->name);
+    fprintf(scoreFile, "%s:%d\n", scoreList->name, scoreList->score);
+    if (scoreList->next->next != NULL)
+    {
+      scoreList = scoreList->next;
+    }
+    else
+    {
+      break;
+    }
+  }
+
+  return 0;
+}
+
 int main(int argc, char *argv[])
 {
   SDL_Surface *temp, *bg;
@@ -438,13 +519,14 @@ int main(int argc, char *argv[])
     return (ret);
   }
 
+  return gameoverScore(0);
+
   // default colorkey
   colorkey = SDL_MapRGB(screen->format, 255, 0, 255);
 
   // fonts
   font_score = TTF_OpenFont("fonts/LinLibertine_DR.ttf", 24);
   font_messages = TTF_OpenFont("fonts/LinLibertine_DR.ttf", 36);
-  ;
 
   // create the text sprites list
   l_sprite_text = list_new();
@@ -476,7 +558,7 @@ int main(int argc, char *argv[])
 
   char key[SDLK_LAST] = {0};
   unsigned int lasttime = 0;
-  
+
   // display "3, 2, 1, ready?" message
   SDL_Color text_color = {255, 255, 0, 0}; // R,G,B,A
   char text[1024];
@@ -491,26 +573,28 @@ int main(int argc, char *argv[])
     int counter;
 
     // display the '3, 2, 1, go !' timer
-    if (timer >= 1 && timer <= 4) {
+    if (timer >= 1 && timer <= 4)
+    {
       int lifetime = 2;
       int offset = 10;
       fflush(stdout);
-      switch(timer) {
-        case 1:
-          sprintf(text, "3");
-          break;
-        case 2:
-          sprintf(text, "2");
-          break;
-        case 3:
-          sprintf(text, "1");
-          break;
-        case 4:
-          sprintf(text, "Go !");
-          lifetime = 50;
-          offset = 30;
-          break;
-        default:
+      switch (timer)
+      {
+      case 1:
+        sprintf(text, "3");
+        break;
+      case 2:
+        sprintf(text, "2");
+        break;
+      case 3:
+        sprintf(text, "1");
+        break;
+      case 4:
+        sprintf(text, "Go !");
+        lifetime = 50;
+        offset = 30;
+        break;
+      default:
         break;
       }
       SDL_Surface *text_surf = TTF_RenderText_Solid(font_messages, text, text_color);
